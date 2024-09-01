@@ -2823,4 +2823,78 @@ void Parser::ParseMicrosoftIfExistsStatement(StmtVector &Stmts) {
       Stmts.push_back(R.get());
   }
   Braces.consumeClose();
+
+}
+
+/**
+ * StmtResult Parser::ParseForStatement
+ * Extend the C programming language to support a new language construct:
+
+```
+  [[ IntExpression, Expression, IntExpression ]]
+```
+
+Semantics: Evaluate `Expression` and then check if the first and the
+last expressions are equal.  If yes, then stop; otherwise increment
+the first expression by one and then repete the steps.  Here is an
+example.
+
+```
+int n() { ... }
+
+int m(int a, int b) { // a=0, b=1
+    int c = [[ a, n(), b ]]; // n() will be called twice (but a and b only once each) and the result will be in c
+    return c;
+}
+```
+ * 
+ */
+
+StmtResult Parser::ParseCustomStatement() {
+  assert(Tok.is(tok::l_squaresquare) && "Not a custom stmt!");
+  SourceLocation LSquareLoc = ConsumeToken();  // eat the '[['.
+
+  ExprResult First = ParseExpression();
+  if (First.isInvalid()) {
+    SkipUntil(tok::r_squaresquare);
+    return StmtError();
+  }
+
+  if (Tok.isNot(tok::comma)) {
+    Diag(Tok, diag::err_expected) << tok::comma;
+    SkipUntil(tok::r_squaresquare);
+    return StmtError();
+  }
+
+  ConsumeToken();  // eat the ','.
+
+  ExprResult Second = ParseExpression();
+  if (Second.isInvalid()) {
+    SkipUntil(tok::r_squaresquare);
+    return StmtError();
+  }
+
+  if (Tok.isNot(tok::comma)) {
+    Diag(Tok, diag::err_expected) << tok::comma;
+    SkipUntil(tok::r_squaresquare);
+    return StmtError();
+  }
+
+  ConsumeToken();  // eat the ','.
+
+  ExprResult Third = ParseExpression();
+  if (Third.isInvalid()) {
+    SkipUntil(tok::r_squaresquare);
+    return StmtError();
+  }
+
+  if (Tok.isNot(tok::r_squaresquare)) {
+    Diag(Tok, diag::err_expected) << tok::r_squaresquare;
+    SkipUntil(tok::r_squaresquare);
+    return StmtError();
+  }
+
+  ConsumeToken();  // eat the ']]'.
+
+  return Actions.ActOnCustomStmt(LSquareLoc, First.get(), Second.get(), Third.get());
 }

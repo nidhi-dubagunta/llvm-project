@@ -446,6 +446,32 @@ Parser::ParseRHSOfBinaryExpression(ExprResult LHS, prec::Level MinPrec) {
     Token OpToken = Tok;
     ConsumeToken();
 
+    if (OpToken.is(tok::l_squaresquare)) {
+      /**
+                 * Extend the C programming language to support a new language construct:
+
+          ```
+            [[ IntExpression, Expression, IntExpression ]]
+          ```
+
+          Semantics: Evaluate `Expression` and then check if the first and the
+          last expressions are equal.  If yes, then stop; otherwise increment
+          the first expression by one and then repete the steps.  Here is an
+          example.
+
+          ```
+          int n() { ... }
+
+          int m(int a, int b) { // a=0, b=1
+              int c = [[ a, n(), b ]]; // n() will be called twice (but a and b only once each) and the result will be in c
+              return c;
+          }
+       */
+
+      //if we see [[, then read IntExpression, read comma, read Expression, read comma, read IntExpression, read ]]
+      
+    }
+
     if (OpToken.is(tok::caretcaret)) {
       return ExprError(Diag(Tok, diag::err_opencl_logical_exclusive_or));
     }

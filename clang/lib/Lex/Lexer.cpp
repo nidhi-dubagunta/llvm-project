@@ -4031,10 +4031,23 @@ LexStart:
     Kind = tok::question;
     break;
   case '[':
-    Kind = tok::l_square;
+    //check if there is a second '['
+    Char = getCharAndSize(CurPtr, SizeTmp);
+    if (Char == '[') {
+      CurPtr = ConsumeChar(CurPtr, SizeTmp, Result);
+      Kind = tok::l_squaresquare;
+    }
+    else
+      Kind = tok::l_square;
     break;
   case ']':
-    Kind = tok::r_square;
+    Char = getCharAndSize(CurPtr, SizeTmp);
+    if (Char == ']') {
+      CurPtr = ConsumeChar(CurPtr, SizeTmp, Result);
+      Kind = tok::r_squaresquare;
+    }
+    else
+      Kind = tok::r_square;
     break;
   case '(':
     Kind = tok::l_paren;
